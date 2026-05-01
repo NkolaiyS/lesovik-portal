@@ -57,7 +57,9 @@
             padding: 15px 40px;
             background: var(--glass-bg);
             backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--glass-border);
+            transition: background 0.3s, border-color 0.3s;
         }
 
         .logo-container {
@@ -70,6 +72,7 @@
             width: 28px;
             height: 28px;
             fill: var(--accent-primary);
+            transition: fill 0.3s;
         }
 
         .glass-header h1 {
@@ -77,6 +80,8 @@
             color: var(--accent-primary);
             margin: 0;
             font-size: 22px;
+            letter-spacing: 0.5px;
+            transition: color 0.3s;
         }
 
         .theme-toggle {
@@ -89,6 +94,15 @@
             font-family: 'Inter', sans-serif;
             font-weight: 500;
             font-size: 14px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--accent-primary);
+            color: var(--bg-color);
         }
 
         .bento-grid {
@@ -105,6 +119,11 @@
             border: 1px solid var(--border-color);
             border-radius: var(--radius-strict);
             padding: 24px;
+            transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s, border-color 0.3s;
+        }
+
+        .bento-card:hover {
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.05);
         }
 
         .span-2 { grid-column: span 2; }
@@ -121,7 +140,9 @@
             font-weight: 600;
             font-size: 13px;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
             color: var(--accent-primary);
+            transition: color 0.3s;
         }
 
         input[type="text"], textarea {
@@ -134,6 +155,41 @@
             background-color: var(--input-bg);
             color: var(--text-color);
             font-size: 15px;
+            transition: border-color 0.2s, background-color 0.3s, color 0.3s;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: inset 2px 2px 0px rgba(0,0,0,0.05);
+        }
+
+        input[readonly] {
+            background-color: var(--bg-color);
+            color: #888;
+            cursor: not-allowed;
+            margin-top: 10px;
+        }
+
+        /* Стилизация кнопки загрузки файла */
+        input[type="file"] {
+            display: none;
+        }
+        
+        .file-upload-btn {
+            background-color: var(--input-bg);
+            border: 1px dashed var(--accent-primary);
+            color: var(--accent-primary);
+            padding: 14px 16px;
+            text-align: center;
+            border-radius: var(--radius-strict);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .file-upload-btn:hover {
+            background-color: var(--accent-light);
         }
 
         textarea {
@@ -152,7 +208,9 @@
             font-weight: 600;
             width: 100%;
             font-family: 'Inter', sans-serif;
+            transition: background-color 0.2s, transform 0.1s, color 0.3s;
             text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .button-load {
@@ -161,6 +219,16 @@
             border: 1px solid var(--accent-primary);
             padding: 10px 20px;
             font-size: 14px;
+            letter-spacing: normal;
+        }
+
+        .button-submit:hover {
+            background-color: var(--text-color);
+            color: var(--bg-color);
+        }
+
+        .button-submit:active {
+            transform: translateY(2px);
         }
 
         /* Стили для списка статей */
@@ -179,11 +247,13 @@
             background-color: var(--input-bg);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-strict);
+            transition: background-color 0.3s, border-color 0.3s;
         }
 
         .article-title {
             font-weight: 500;
             font-size: 15px;
+            color: var(--text-color);
         }
 
         .btn-delete {
@@ -196,7 +266,11 @@
             font-weight: 600;
             transition: 0.2s;
         }
-        .btn-delete:hover { background-color: var(--danger-color); color: #fff; }
+        
+        .btn-delete:hover { 
+            background-color: var(--danger-color); 
+            color: #fff; 
+        }
 
         #status {
             margin-top: 16px;
@@ -206,6 +280,17 @@
             font-weight: 500;
             text-align: center;
             font-size: 14px;
+        }
+
+        .status-success { background-color: var(--accent-light); color: var(--accent-primary); border: 1px solid var(--accent-secondary); }
+        .status-error { background-color: #FEE2E2; color: #991B1B; border: 1px solid #F87171; }
+        .status-loading { background-color: var(--border-color); color: var(--text-color); }
+
+        @media (max-width: 768px) {
+            .bento-grid { grid-template-columns: 1fr; }
+            .span-2 { grid-column: span 1; }
+            .glass-header { padding: 15px 20px; }
+            .theme-toggle span { display: none; }
         }
     </style>
 </head>
@@ -240,12 +325,29 @@
 
     <div class="bento-card span-2">
         <div class="form-group">
-            <label>Текст статьи (HTML)</label>
+            <label>Текст статьи (HTML-разметка)</label>
             <textarea id="content" placeholder="<p>Введение в тему...</p>"></textarea>
         </div>
     </div>
 
-    <!-- Шаг 2. Публикация -->
+    <!-- Шаг 2. Загрузка медиа -->
+    <div class="bento-card">
+        <div class="form-group">
+            <label>Обложка статьи</label>
+            <label for="file-upload" class="file-upload-btn" id="upload-label">📁 Выбрать фото на компьютере</label>
+            <input type="file" id="file-upload" accept="image/*" onchange="handleFileSelect(event)">
+            <input type="text" id="cover" placeholder="Ссылка на фото появится здесь..." readonly>
+        </div>
+    </div>
+
+    <div class="bento-card">
+        <div class="form-group">
+            <label>Код видео (Rutube iFrame)</label>
+            <input type="text" id="rutube" placeholder='<iframe src="https://rutube.ru/..." ...></iframe>'>
+        </div>
+    </div>
+
+    <!-- Шаг 3. Публикация -->
     <div class="bento-card span-2">
         <div class="form-group">
             <button class="button-submit" onclick="sendData()">Опубликовать материал</button>
@@ -253,7 +355,7 @@
         </div>
     </div>
 
-    <!-- Шаг 3. Управление (Новый блок) -->
+    <!-- Шаг 4. Управление материалами -->
     <div class="bento-card span-2">
         <div class="form-group">
             <label>Управление материалами</label>
@@ -272,6 +374,7 @@
     function toggleTheme() {
         const body = document.documentElement;
         const btn = document.getElementById('themeBtn');
+        
         if (body.getAttribute('data-theme') === 'dark') {
             body.removeAttribute('data-theme');
             btn.innerHTML = 'Включить тень 🌙';
@@ -281,38 +384,74 @@
         }
     }
 
+    // Имитация загрузки файла до настройки Cloud Storage
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const label = document.getElementById('upload-label');
+            const coverInput = document.getElementById('cover');
+            
+            label.innerText = '⏳ Загрузка: ' + file.name + '...';
+            
+            // Имитируем процесс загрузки (в будущем здесь будет реальный запрос к Яндексу)
+            setTimeout(() => {
+                label.innerText = '✅ Фото загружено';
+                coverInput.value = 'https://storage.yandexcloud.net/lesovik-media/' + file.name.replace(/\s+/g, '-').toLowerCase();
+            }, 1000);
+        }
+    }
+
     async function sendData() {
         const statusDiv = document.getElementById('status');
         const data = {
-            action: 'create', // Добавили метку действия для функции
+            action: 'create', // Метка действия для функции (создание)
             title: document.getElementById('title').value,
             slug: document.getElementById('slug').value,
             content: document.getElementById('content').value,
+            cover_image_url: document.getElementById('cover').value, // Возвращено фото
+            rutube_iframe: document.getElementById('rutube').value, // Возвращено видео
             is_published: true
         };
 
         statusDiv.style.display = 'block';
+        statusDiv.className = 'status-loading';
         statusDiv.innerText = 'Подключение к YDB...';
 
         try {
-            const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+
             const result = await response.json();
+            
             if (result.status === 'success') {
-                statusDiv.innerText = 'Успех!';
+                statusDiv.className = 'status-success';
+                statusDiv.innerText = 'Материал успешно загружен в базу.';
+                
+                // Очистка всех полей формы после успеха
                 document.getElementById('title').value = '';
                 document.getElementById('slug').value = '';
                 document.getElementById('content').value = '';
-                loadArticles(); // Обновляем список
+                document.getElementById('cover').value = '';
+                document.getElementById('rutube').value = '';
+                document.getElementById('upload-label').innerText = '📁 Выбрать фото на компьютере';
+                
+                // Автоматически обновляем список статей
+                loadArticles();
+            } else {
+                throw new Error(result.error);
             }
         } catch (error) {
-            statusDiv.innerText = 'Ошибка: ' + error.message;
+            statusDiv.className = 'status-error';
+            statusDiv.innerText = 'Системная ошибка: ' + error.message;
         }
     }
 
     // Загрузка статей из базы (потребует обновления Cloud Function)
     async function loadArticles() {
         const listDiv = document.getElementById('articleList');
-        listDiv.innerHTML = '<p style="font-size: 14px;">Загрузка данных...</p>';
+        listDiv.innerHTML = '<p style="font-size: 14px; color: var(--text-color);">Загрузка данных...</p>';
         
         try {
             // Отправляем запрос на получение списка
@@ -330,10 +469,10 @@
                     `;
                 });
             } else {
-                listDiv.innerHTML = '<p style="font-size: 14px;">Статей пока нет.</p>';
+                listDiv.innerHTML = '<p style="font-size: 14px; color: var(--text-color);">Статей пока нет.</p>';
             }
         } catch (error) {
-            listDiv.innerHTML = '<p style="font-size: 14px; color: red;">Нужно обновить код Яндекс Функции для вывода списка.</p>';
+            listDiv.innerHTML = '<p style="font-size: 14px; color: #DC2626;">Нужно обновить код Яндекс Функции для вывода списка.</p>';
         }
     }
 
@@ -350,6 +489,8 @@
             
             if (result.status === 'success') {
                 document.getElementById(`art-${id}`).remove();
+            } else {
+                alert('Ошибка: ' + result.error);
             }
         } catch (error) {
             alert('Ошибка удаления. Проверьте Cloud Function.');
