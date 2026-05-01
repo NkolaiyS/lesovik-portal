@@ -5,14 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Лесовик — Панель управления</title>
     
-    <!-- Место для вашего будущего фавикона (иконки вкладки) -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌲</text></svg>">
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Inter:wght@400;500;600&display=swap');
 
         :root {
-            /* Светлая тема */
             --bg-color: #F9FBF9;
             --text-color: #333333;
             --accent-primary: #2D5A27;
@@ -23,11 +21,10 @@
             --input-bg: #FFFFFF;
             --glass-bg: rgba(249, 251, 249, 0.85);
             --glass-border: rgba(45, 90, 39, 0.1);
-            --radius-strict: 2px; /* Строгие углы по ТЗ */
+            --radius-strict: 8px; /* Оптимальное скругление по вашей просьбе */
         }
 
         [data-theme="dark"] {
-            /* Темная тема */
             --bg-color: #1A2421;
             --text-color: #F9FBF9;
             --accent-primary: #8FBC8F;
@@ -49,7 +46,6 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        /* Плавающая стеклянная шапка */
         .glass-header {
             position: sticky;
             top: 0;
@@ -71,7 +67,6 @@
             gap: 12px;
         }
 
-        /* Заглушка для векторного логотипа (силуэт ели) */
         .logo-svg {
             width: 28px;
             height: 28px;
@@ -109,7 +104,6 @@
             color: var(--bg-color);
         }
 
-        /* Бенто-сетка со строгими формами */
         .bento-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -128,17 +122,16 @@
         }
 
         .bento-card:hover {
-            box-shadow: 4px 4px 0px rgba(0,0,0,0.05); /* Жесткая инженерная тень */
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.05);
         }
 
-        .span-2 {
-            grid-column: span 2;
-        }
+        .span-2 { grid-column: span 2; }
 
         .form-group {
             display: flex;
             flex-direction: column;
             height: 100%;
+            justify-content: center;
         }
 
         label {
@@ -151,7 +144,7 @@
             transition: color 0.3s;
         }
 
-        input, textarea {
+        input[type="text"], textarea {
             width: 100%;
             padding: 14px 16px;
             border: 1px solid var(--border-color);
@@ -162,13 +155,40 @@
             color: var(--text-color);
             font-size: 15px;
             transition: border-color 0.2s, background-color 0.3s, color 0.3s;
-            flex-grow: 1;
         }
 
-        input:focus, textarea:focus {
+        input[type="text"]:focus, textarea:focus {
             outline: none;
             border-color: var(--accent-primary);
             box-shadow: inset 2px 2px 0px rgba(0,0,0,0.05);
+        }
+
+        input[readonly] {
+            background-color: var(--bg-color);
+            color: #888;
+            cursor: not-allowed;
+            margin-top: 10px;
+        }
+
+        /* Стилизация кнопки загрузки файла */
+        input[type="file"] {
+            display: none;
+        }
+        
+        .file-upload-btn {
+            background-color: var(--input-bg);
+            border: 1px dashed var(--accent-primary);
+            color: var(--accent-primary);
+            padding: 14px 16px;
+            text-align: center;
+            border-radius: var(--radius-strict);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .file-upload-btn:hover {
+            background-color: var(--accent-light);
         }
 
         textarea {
@@ -176,7 +196,6 @@
             resize: vertical;
         }
 
-        /* Строгая прямоугольная кнопка */
         .button-submit {
             background-color: var(--accent-primary);
             color: var(--bg-color);
@@ -194,7 +213,7 @@
         }
 
         .button-submit:hover {
-            background-color: var(--text-color); /* Меняет цвет на контрастный при наведении */
+            background-color: var(--text-color);
             color: var(--bg-color);
         }
 
@@ -216,12 +235,11 @@
         .status-error { background-color: #FEE2E2; color: #991B1B; border: 1px solid #F87171; }
         .status-loading { background-color: var(--border-color); color: var(--text-color); }
 
-        /* Мобильная адаптация */
         @media (max-width: 768px) {
             .bento-grid { grid-template-columns: 1fr; }
             .span-2 { grid-column: span 1; }
             .glass-header { padding: 15px 20px; }
-            .theme-toggle span { display: none; } /* На мобильном оставляем только иконку на кнопке */
+            .theme-toggle span { display: none; }
         }
     </style>
 </head>
@@ -229,7 +247,6 @@
 
 <header class="glass-header">
     <div class="logo-container">
-        <!-- Векторная иконка дерева -->
         <svg class="logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2L1 21H23L12 2ZM12 6.88L18.17 17.5H5.83L12 6.88Z"/>
             <rect x="10.5" y="20" width="3" height="4"/>
@@ -240,6 +257,7 @@
 </header>
 
 <main class="bento-grid">
+    <!-- Шаг 1. Основные тексты -->
     <div class="bento-card">
         <div class="form-group">
             <label>Основной заголовок</label>
@@ -261,15 +279,26 @@
         </div>
     </div>
 
+    <!-- Шаг 2. Загрузка медиа -->
     <div class="bento-card">
         <div class="form-group">
-            <label>Ссылка на фото (Object Storage)</label>
-            <input type="text" id="cover" placeholder="https://storage.yandexcloud.net/...">
+            <label>Обложка статьи</label>
+            <label for="file-upload" class="file-upload-btn" id="upload-label">📁 Выбрать фото на компьютере</label>
+            <input type="file" id="file-upload" accept="image/*" onchange="handleFileSelect(event)">
+            <input type="text" id="cover" placeholder="Ссылка на фото появится здесь..." readonly>
         </div>
     </div>
 
     <div class="bento-card">
-        <div class="form-group" style="justify-content: flex-end;">
+        <div class="form-group">
+            <label>Код видео (Rutube iFrame)</label>
+            <input type="text" id="rutube" placeholder='<iframe src="https://rutube.ru/..." ...></iframe>'>
+        </div>
+    </div>
+
+    <!-- Шаг 3. Публикация -->
+    <div class="bento-card span-2">
+        <div class="form-group">
             <button class="button-submit" onclick="sendData()">Опубликовать материал</button>
             <div id="status"></div>
         </div>
@@ -293,6 +322,23 @@
         }
     }
 
+    // Имитация загрузки файла до настройки Cloud Storage
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const label = document.getElementById('upload-label');
+            const coverInput = document.getElementById('cover');
+            
+            label.innerText = '⏳ Загрузка: ' + file.name + '...';
+            
+            // Имитируем процесс загрузки (в будущем здесь будет реальный запрос к Яндексу)
+            setTimeout(() => {
+                label.innerText = '✅ Фото загружено';
+                coverInput.value = 'https://storage.yandexcloud.net/lesovik-media/' + file.name.replace(/\s+/g, '-').toLowerCase();
+            }, 1000);
+        }
+    }
+
     async function sendData() {
         const statusDiv = document.getElementById('status');
         const data = {
@@ -300,6 +346,7 @@
             slug: document.getElementById('slug').value,
             content: document.getElementById('content').value,
             cover_image_url: document.getElementById('cover').value,
+            rutube_iframe: document.getElementById('rutube').value,
             is_published: true
         };
 
@@ -319,10 +366,13 @@
                 statusDiv.className = 'status-success';
                 statusDiv.innerText = 'Материал успешно загружен в базу.';
                 
+                // Очистка формы
                 document.getElementById('title').value = '';
                 document.getElementById('slug').value = '';
                 document.getElementById('content').value = '';
                 document.getElementById('cover').value = '';
+                document.getElementById('rutube').value = '';
+                document.getElementById('upload-label').innerText = '📁 Выбрать фото на компьютере';
             } else {
                 throw new Error(result.error);
             }
