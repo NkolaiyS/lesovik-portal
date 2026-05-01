@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Лесовик — Панель управления</title>
+    
+    <!-- Место для вашего будущего фавикона (иконки вкладки) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌲</text></svg>">
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Inter:wght@400;500;600&display=swap');
 
@@ -16,10 +20,10 @@
             --accent-light: #E3F2FD;
             --card-bg: #FFFFFF;
             --border-color: #E0E0E0;
-            --input-bg: #F9FBF9;
-            /* Переменные для "стекла" */
-            --glass-bg: rgba(249, 251, 249, 0.75);
-            --glass-border: rgba(255, 255, 255, 0.5);
+            --input-bg: #FFFFFF;
+            --glass-bg: rgba(249, 251, 249, 0.85);
+            --glass-border: rgba(45, 90, 39, 0.1);
+            --radius-strict: 2px; /* Строгие углы по ТЗ */
         }
 
         [data-theme="dark"] {
@@ -32,9 +36,8 @@
             --card-bg: #22302B;
             --border-color: #3A4F46;
             --input-bg: #1A2421;
-            /* Переменные для "стекла" в темной теме */
-            --glass-bg: rgba(26, 36, 33, 0.75);
-            --glass-border: rgba(58, 79, 70, 0.5);
+            --glass-bg: rgba(26, 36, 33, 0.85);
+            --glass-border: rgba(143, 188, 143, 0.1);
         }
 
         body {
@@ -43,7 +46,7 @@
             color: var(--text-color);
             margin: 0;
             padding: 0;
-            transition: background-color 0.3s, color 0.3s;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         /* Плавающая стеклянная шапка */
@@ -54,33 +57,51 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 16px 40px;
+            padding: 15px 40px;
             background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--glass-border);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
             transition: background 0.3s, border-color 0.3s;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Заглушка для векторного логотипа (силуэт ели) */
+        .logo-svg {
+            width: 28px;
+            height: 28px;
+            fill: var(--accent-primary);
+            transition: fill 0.3s;
         }
 
         .glass-header h1 {
             font-family: 'Merriweather', serif;
             color: var(--accent-primary);
             margin: 0;
-            font-size: 24px;
+            font-size: 22px;
+            letter-spacing: 0.5px;
+            transition: color 0.3s;
         }
 
         .theme-toggle {
             background: transparent;
-            border: 2px solid var(--accent-primary);
+            border: 1px solid var(--accent-primary);
             color: var(--accent-primary);
-            padding: 8px 20px;
-            border-radius: 30px;
+            padding: 10px 20px;
+            border-radius: var(--radius-strict);
             cursor: pointer;
             font-family: 'Inter', sans-serif;
-            font-weight: 600;
+            font-weight: 500;
             font-size: 14px;
-            transition: all 0.3s;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .theme-toggle:hover {
@@ -88,11 +109,11 @@
             color: var(--bg-color);
         }
 
-        /* Бенто-сетка */
+        /* Бенто-сетка со строгими формами */
         .bento-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 24px;
+            gap: 20px;
             max-width: 900px;
             margin: 40px auto;
             padding: 0 20px;
@@ -101,18 +122,15 @@
         .bento-card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 20px;
+            border-radius: var(--radius-strict);
             padding: 24px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-            transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s;
+            transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s, border-color 0.3s;
         }
 
         .bento-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.05); /* Жесткая инженерная тень */
         }
 
-        /* Элемент, занимающий две колонки */
         .span-2 {
             grid-column: span 2;
         }
@@ -126,28 +144,31 @@
         label {
             margin-bottom: 8px;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             color: var(--accent-primary);
+            transition: color 0.3s;
         }
 
         input, textarea {
             width: 100%;
             padding: 14px 16px;
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: var(--radius-strict);
             box-sizing: border-box;
             font-family: 'Inter', sans-serif;
             background-color: var(--input-bg);
             color: var(--text-color);
             font-size: 15px;
-            transition: border-color 0.3s, box-shadow 0.3s;
+            transition: border-color 0.2s, background-color 0.3s, color 0.3s;
             flex-grow: 1;
         }
 
         input:focus, textarea:focus {
             outline: none;
-            border-color: var(--accent-secondary);
-            box-shadow: 0 0 0 3px rgba(143, 188, 143, 0.2);
+            border-color: var(--accent-primary);
+            box-shadow: inset 2px 2px 0px rgba(0,0,0,0.05);
         }
 
         textarea {
@@ -155,33 +176,37 @@
             resize: vertical;
         }
 
+        /* Строгая прямоугольная кнопка */
         .button-submit {
             background-color: var(--accent-primary);
             color: var(--bg-color);
             border: none;
             padding: 16px 32px;
-            border-radius: 12px;
+            border-radius: var(--radius-strict);
             cursor: pointer;
             font-size: 16px;
             font-weight: 600;
             width: 100%;
             font-family: 'Inter', sans-serif;
-            transition: background-color 0.3s, transform 0.1s;
+            transition: background-color 0.2s, transform 0.1s, color 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .button-submit:hover {
-            background-color: #23471f; /* Чуть темнее при наведении */
+            background-color: var(--text-color); /* Меняет цвет на контрастный при наведении */
+            color: var(--bg-color);
         }
 
         .button-submit:active {
-            transform: scale(0.98);
+            transform: translateY(2px);
         }
 
         #status {
             margin-top: 16px;
             padding: 16px;
             display: none;
-            border-radius: 12px;
+            border-radius: var(--radius-strict);
             font-weight: 500;
             text-align: center;
             font-size: 14px;
@@ -191,40 +216,37 @@
         .status-error { background-color: #FEE2E2; color: #991B1B; border: 1px solid #F87171; }
         .status-loading { background-color: var(--border-color); color: var(--text-color); }
 
-        /* Адаптивность для мобильных устройств */
+        /* Мобильная адаптация */
         @media (max-width: 768px) {
-            .bento-grid {
-                grid-template-columns: 1fr;
-            }
-            .span-2 {
-                grid-column: span 1;
-            }
-            .glass-header {
-                padding: 16px 20px;
-            }
+            .bento-grid { grid-template-columns: 1fr; }
+            .span-2 { grid-column: span 1; }
+            .glass-header { padding: 15px 20px; }
+            .theme-toggle span { display: none; } /* На мобильном оставляем только иконку на кнопке */
         }
     </style>
 </head>
 <body>
 
-<!-- Стеклянная плавающая шапка -->
 <header class="glass-header">
-    <h1>Лесовик</h1>
-    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">СВЕТ / ТЕНЬ</button>
+    <div class="logo-container">
+        <!-- Векторная иконка дерева -->
+        <svg class="logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L1 21H23L12 2ZM12 6.88L18.17 17.5H5.83L12 6.88Z"/>
+            <rect x="10.5" y="20" width="3" height="4"/>
+        </svg>
+        <h1>Лесовик</h1>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">Включить тень 🌙</button>
 </header>
 
-<!-- Основной контент в Бенто-сетке -->
 <main class="bento-grid">
-    
-    <!-- Карточка 1: Заголовок -->
     <div class="bento-card">
         <div class="form-group">
-            <label>Основной заголовок статьи</label>
+            <label>Основной заголовок</label>
             <input type="text" id="title" placeholder="Особенности таксации...">
         </div>
     </div>
 
-    <!-- Карточка 2: Slug -->
     <div class="bento-card">
         <div class="form-group">
             <label>Адрес страницы (slug)</label>
@@ -232,15 +254,13 @@
         </div>
     </div>
 
-    <!-- Карточка 3: Текст статьи (Широкая карточка на 2 колонки) -->
     <div class="bento-card span-2">
         <div class="form-group">
-            <label>Текст статьи (HTML поддерживается)</label>
+            <label>Текст статьи (HTML-разметка)</label>
             <textarea id="content" placeholder="<p>Введение в тему...</p>"></textarea>
         </div>
     </div>
 
-    <!-- Карточка 4: Обложка -->
     <div class="bento-card">
         <div class="form-group">
             <label>Ссылка на фото (Object Storage)</label>
@@ -248,14 +268,12 @@
         </div>
     </div>
 
-    <!-- Карточка 5: Кнопка публикации -->
     <div class="bento-card">
-        <div class="form-group" style="justify-content: center;">
-            <button class="button-submit" onclick="sendData()">Опубликовать</button>
+        <div class="form-group" style="justify-content: flex-end;">
+            <button class="button-submit" onclick="sendData()">Опубликовать материал</button>
             <div id="status"></div>
         </div>
     </div>
-
 </main>
 
 <script>
@@ -264,10 +282,14 @@
 
     function toggleTheme() {
         const body = document.documentElement;
+        const btn = document.getElementById('themeBtn');
+        
         if (body.getAttribute('data-theme') === 'dark') {
             body.removeAttribute('data-theme');
+            btn.innerHTML = 'Включить тень 🌙';
         } else {
             body.setAttribute('data-theme', 'dark');
+            btn.innerHTML = 'Включить свет ☀️';
         }
     }
 
@@ -283,7 +305,7 @@
 
         statusDiv.style.display = 'block';
         statusDiv.className = 'status-loading';
-        statusDiv.innerText = 'Отправка данных в базу...';
+        statusDiv.innerText = 'Подключение к YDB...';
 
         try {
             const response = await fetch(API_URL, {
@@ -295,7 +317,7 @@
             
             if (result.status === 'success') {
                 statusDiv.className = 'status-success';
-                statusDiv.innerText = 'Успех! Статья сохранена. ID: ' + result.article_id;
+                statusDiv.innerText = 'Материал успешно загружен в базу.';
                 
                 document.getElementById('title').value = '';
                 document.getElementById('slug').value = '';
@@ -306,7 +328,7 @@
             }
         } catch (error) {
             statusDiv.className = 'status-error';
-            statusDiv.innerText = 'Ошибка: ' + error.message;
+            statusDiv.innerText = 'Системная ошибка: ' + error.message;
         }
     }
 </script>
