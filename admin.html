@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лесовик — Панель управления</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Inter:wght@400;500;600&display=swap');
+
+        :root {
+            /* Светлая тема */
+            --bg-color: #F9FBF9;
+            --text-color: #333333;
+            --accent-primary: #2D5A27;
+            --accent-secondary: #8FBC8F;
+            --accent-light: #E3F2FD;
+            --card-bg: #FFFFFF;
+            --border-color: #E0E0E0;
+            --input-bg: #F9FBF9;
+            /* Переменные для "стекла" */
+            --glass-bg: rgba(249, 251, 249, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.5);
+        }
+
+        [data-theme="dark"] {
+            /* Темная тема */
+            --bg-color: #1A2421;
+            --text-color: #F9FBF9;
+            --accent-primary: #8FBC8F;
+            --accent-secondary: #2D5A27;
+            --accent-light: #2A3B32;
+            --card-bg: #22302B;
+            --border-color: #3A4F46;
+            --input-bg: #1A2421;
+            /* Переменные для "стекла" в темной теме */
+            --glass-bg: rgba(26, 36, 33, 0.75);
+            --glass-border: rgba(58, 79, 70, 0.5);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Плавающая стеклянная шапка */
+        .glass-header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 40px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--glass-border);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .glass-header h1 {
+            font-family: 'Merriweather', serif;
+            color: var(--accent-primary);
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: 2px solid var(--accent-primary);
+            color: var(--accent-primary);
+            padding: 8px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--accent-primary);
+            color: var(--bg-color);
+        }
+
+        /* Бенто-сетка */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .bento-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s;
+        }
+
+        .bento-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+        }
+
+        /* Элемент, занимающий две колонки */
+        .span-2 {
+            grid-column: span 2;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--accent-primary);
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            font-size: 15px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            flex-grow: 1;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-secondary);
+            box-shadow: 0 0 0 3px rgba(143, 188, 143, 0.2);
+        }
+
+        textarea {
+            min-height: 250px;
+            resize: vertical;
+        }
+
+        .button-submit {
+            background-color: var(--accent-primary);
+            color: var(--bg-color);
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        .button-submit:hover {
+            background-color: #23471f; /* Чуть темнее при наведении */
+        }
+
+        .button-submit:active {
+            transform: scale(0.98);
+        }
+
+        #status {
+            margin-top: 16px;
+            padding: 16px;
+            display: none;
+            border-radius: 12px;
+            font-weight: 500;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .status-success { background-color: var(--accent-light); color: var(--accent-primary); border: 1px solid var(--accent-secondary); }
+        .status-error { background-color: #FEE2E2; color: #991B1B; border: 1px solid #F87171; }
+        .status-loading { background-color: var(--border-color); color: var(--text-color); }
+
+        /* Адаптивность для мобильных устройств */
+        @media (max-width: 768px) {
+            .bento-grid {
+                grid-template-columns: 1fr;
+            }
+            .span-2 {
+                grid-column: span 1;
+            }
+            .glass-header {
+                padding: 16px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Стеклянная плавающая шапка -->
+<header class="glass-header">
+    <h1>Лесовик</h1>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">СВЕТ / ТЕНЬ</button>
+</header>
+
+<!-- Основной контент в Бенто-сетке -->
+<main class="bento-grid">
+    
+    <!-- Карточка 1: Заголовок -->
+    <div class="bento-card">
+        <div class="form-group">
+            <label>Основной заголовок статьи</label>
+            <input type="text" id="title" placeholder="Особенности таксации...">
+        </div>
+    </div>
+
+    <!-- Карточка 2: Slug -->
+    <div class="bento-card">
+        <div class="form-group">
+            <label>Адрес страницы (slug)</label>
+            <input type="text" id="slug" placeholder="taksaciya-lesov">
+        </div>
+    </div>
+
+    <!-- Карточка 3: Текст статьи (Широкая карточка на 2 колонки) -->
+    <div class="bento-card span-2">
+        <div class="form-group">
+            <label>Текст статьи (HTML поддерживается)</label>
+            <textarea id="content" placeholder="<p>Введение в тему...</p>"></textarea>
+        </div>
+    </div>
+
+    <!-- Карточка 4: Обложка -->
+    <div class="bento-card">
+        <div class="form-group">
+            <label>Ссылка на фото (Object Storage)</label>
+            <input type="text" id="cover" placeholder="https://storage.yandexcloud.net/...">
+        </div>
+    </div>
+
+    <!-- Карточка 5: Кнопка публикации -->
+    <div class="bento-card">
+        <div class="form-group" style="justify-content: center;">
+            <button class="button-submit" onclick="sendData()">Опубликовать</button>
+            <div id="status"></div>
+        </div>
+    </div>
+
+</main>
+
+<script>
+    // ВАЖНО: ЗАМЕНИТЕ НА ВАШУ ССЫЛКУ ИЗ ОБЛАКА
+    const API_URL = 'https://functions.yandexcloud.net/d4ecn5ag33dcdd2deivd';
+
+    function toggleTheme() {
+        const body = document.documentElement;
+        if (body.getAttribute('data-theme') === 'dark') {
+            body.removeAttribute('data-theme');
+        } else {
+            body.setAttribute('data-theme', 'dark');
+        }
+    }
+
+    async function sendData() {
+        const statusDiv = document.getElementById('status');
+        const data = {
+            title: document.getElementById('title').value,
+            slug: document.getElementById('slug').value,
+            content: document.getElementById('content').value,
+            cover_image_url: document.getElementById('cover').value,
+            is_published: true
+        };
+
+        statusDiv.style.display = 'block';
+        statusDiv.className = 'status-loading';
+        statusDiv.innerText = 'Отправка данных в базу...';
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                statusDiv.className = 'status-success';
+                statusDiv.innerText = 'Успех! Статья сохранена. ID: ' + result.article_id;
+                
+                document.getElementById('title').value = '';
+                document.getElementById('slug').value = '';
+                document.getElementById('content').value = '';
+                document.getElementById('cover').value = '';
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (error) {
+            statusDiv.className = 'status-error';
+            statusDiv.innerText = 'Ошибка: ' + error.message;
+        }
+    }
+</script>
+
+</body>
+</html>
