@@ -384,21 +384,48 @@
         }
     }
 
-    // Имитация загрузки файла до настройки Cloud Storage
+    // РЕАЛЬНАЯ загрузка файла в Cloud Storage через Яндекс Функцию
     function handleFileSelect(event) {
         const file = event.target.files[0];
-        if (file) {
-            const label = document.getElementById('upload-label');
-            const coverInput = document.getElementById('cover');
-            
-            label.innerText = '⏳ Загрузка: ' + file.name + '...';
-            
-            // Имитируем процесс загрузки (в будущем здесь будет реальный запрос к Яндексу)
-            setTimeout(() => {
-                label.innerText = '✅ Фото загружено';
-                coverInput.value = 'https://storage.yandexcloud.net/lesovik-media/' + file.name.replace(/\s+/g, '-').toLowerCase();
-            }, 1000);
-        }
+        if (!file) return;
+
+        const label = document.getElementById('upload-label');
+        const coverInput = document.getElementById('cover');
+        
+        label.innerText = '⏳ Отправка: ' + file.name + '...';
+        
+        // Читаем файл как Base64
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const base64Content = e.target.result; 
+
+            try {
+                // Отправляем реальный запрос в Яндекс Функцию
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'upload',
+                        filename: file.name.replace(/\s+/g, '-').toLowerCase(), // убираем пробелы
+                        file_content: base64Content
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    label.innerText = '✅ Фото загружено';
+                    coverInput.value = result.url; // Функция вернула настоящую ссылку на S3
+                } else {
+                    label.innerText = '❌ Ошибка';
+                    alert('Ошибка сервера: ' + result.error);
+                }
+            } catch (error) {
+                label.innerText = '❌ Сбой сети';
+                alert('Не удалось связаться с сервером: ' + error.message);
+            }
+        };
+        // Запускаем процесс чтения файла
+        reader.readAsDataURL(file);
     }
 
     async function sendData() {
@@ -448,7 +475,7 @@
         }
     }
 
-    // Загрузка статей из базы (потребует обновления Cloud Function)
+    // Загрузка статей из базы 
     async function loadArticles() {
         const listDiv = document.getElementById('articleList');
         listDiv.innerHTML = '<p style="font-size: 14px; color: var(--text-color);">Загрузка данных...</p>';
@@ -476,7 +503,7 @@
         }
     }
 
-    // Удаление статьи (потребует обновления Cloud Function)
+    // Удаление статьи 
     async function deleteArticle(id) {
         if(!confirm('Точно удалить эту статью?')) return;
         
