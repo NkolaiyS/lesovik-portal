@@ -174,7 +174,6 @@
             margin-top: 10px;
         }
 
-        /* Стилизация кнопки загрузки файла */
         input[type="file"] { display: none; }
         
         .file-upload-btn {
@@ -211,7 +210,6 @@
         }
         .ql-editor p { margin-bottom: 10px; }
         
-        /* Исправление цветов редактора для темной темы */
         [data-theme="dark"] .ql-stroke { stroke: var(--text-color); }
         [data-theme="dark"] .ql-fill { fill: var(--text-color); }
         [data-theme="dark"] .ql-picker { color: var(--text-color); }
@@ -305,7 +303,6 @@
         </div>
     </div>
 
-    <!-- ТЕПЕРЬ ЗДЕСЬ УМНЫЙ РЕДАКТОР -->
     <div class="bento-card span-2">
         <div class="form-group">
             <label>Текст статьи (Вставляйте прямо из ИИ)</label>
@@ -315,7 +312,7 @@
 
     <div class="bento-card">
         <div class="form-group">
-            <label>Обложка статьи (JPEG предпочтительнее)</label>
+            <label>Обложка статьи (Сам сожмет любой размер)</label>
             <label for="file-upload" class="file-upload-btn" id="upload-label">📁 Выбрать фото на компьютере</label>
             <input type="file" id="file-upload" accept="image/*" onchange="handleFileSelect(event)">
             <input type="text" id="cover" placeholder="Ссылка на фото появится здесь..." readonly>
@@ -345,14 +342,12 @@
     </div>
 </main>
 
-<!-- Подключаем библиотеку Умного редактора -->
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
 <script>
     // ВАЖНО: ЗАМЕНИТЕ НА ВАШУ ССЫЛКУ ИЗ ОБЛАКА
     const API_URL = 'https://functions.yandexcloud.net/d4ecn5ag33dcdd2deivd';
 
-    // Инициализация умного редактора
     var quill = new Quill('#editor-container', {
         theme: 'snow',
         placeholder: 'Вставьте скопированный текст сюда...',
@@ -378,6 +373,7 @@
         }
     }
 
+    // НОВАЯ ФУНКЦИЯ: Автоматическое сжатие фото перед отправкой!
     function handleFileSelect(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -385,42 +381,64 @@
         const label = document.getElementById('upload-label');
         const coverInput = document.getElementById('cover');
         
-        label.innerText = '⏳ Отправка: ' + file.name + '...';
+        label.innerText = '⏳ Сжатие и отправка...';
         
         const reader = new FileReader();
-        reader.onload = async function(e) {
-            const base64Content = e.target.result; 
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = async function() {
+                // Создаем виртуальный холст для сжатия картинки
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 1200; // Оптимальная ширина для сайта
+                let width = img.width;
+                let height = img.height;
 
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'upload',
-                        filename: file.name.replace(/\s+/g, '-').toLowerCase(),
-                        file_content: base64Content
-                    })
-                });
-
-                const result = await response.json();
-                if (result.status === 'success') {
-                    label.innerText = '✅ Фото загружено';
-                    coverInput.value = result.url; 
-                } else {
-                    label.innerText = '❌ Ошибка';
-                    alert('Ошибка сервера: ' + result.error);
+                // Уменьшаем пропорционально
+                if (width > MAX_WIDTH) {
+                    height = Math.round((height * MAX_WIDTH) / width);
+                    width = MAX_WIDTH;
                 }
-            } catch (error) {
-                label.innerText = '❌ Сбой сети';
-                alert('Не удалось связаться с сервером: ' + error.message);
-            }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Сжимаем в формат JPEG (качество 80%)
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'upload',
+                            filename: file.name.replace(/\s+/g, '-').toLowerCase(),
+                            file_content: compressedBase64
+                        })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (response.ok && result.status === 'success') {
+                        label.innerText = '✅ Фото загружено';
+                        coverInput.value = result.url; 
+                    } else {
+                        label.innerText = '❌ Ошибка';
+                        // Если Яндекс отбил ошибкой, показываем ее текст
+                        alert('Ошибка сервера: ' + (result.error || result.message || 'Сбой на сервере'));
+                    }
+                } catch (error) {
+                    label.innerText = '❌ Сбой сети';
+                    alert('Сбой: ' + error.message);
+                }
+            };
+            img.src = e.target.result;
         };
         reader.readAsDataURL(file);
     }
 
     async function sendData() {
         const statusDiv = document.getElementById('status');
-        
-        // Берем готовый HTML код с отступами и абзацами прямо из редактора!
         const richTextContent = quill.root.innerHTML;
 
         const data = {
@@ -451,14 +469,14 @@
                 
                 document.getElementById('title').value = '';
                 document.getElementById('slug').value = '';
-                quill.setContents([]); // Очистка редактора
+                quill.setContents([]); 
                 document.getElementById('cover').value = '';
                 document.getElementById('rutube').value = '';
                 document.getElementById('upload-label').innerText = '📁 Выбрать фото на компьютере';
                 
                 loadArticles();
             } else {
-                throw new Error(result.error);
+                throw new Error(result.error || result.message || 'Ошибка сохранения');
             }
         } catch (error) {
             statusDiv.className = 'status-error';
@@ -488,7 +506,7 @@
                 listDiv.innerHTML = '<p style="font-size: 14px; color: var(--text-color);">Статей пока нет.</p>';
             }
         } catch (error) {
-            listDiv.innerHTML = '<p style="font-size: 14px; color: #DC2626;">Нужно обновить код Яндекс Функции для вывода списка.</p>';
+            listDiv.innerHTML = '<p style="font-size: 14px; color: #DC2626;">Сбой загрузки списка.</p>';
         }
     }
 
@@ -505,10 +523,10 @@
             if (result.status === 'success') {
                 document.getElementById(`art-${id}`).remove();
             } else {
-                alert('Ошибка: ' + result.error);
+                alert('Ошибка: ' + (result.error || result.message));
             }
         } catch (error) {
-            alert('Ошибка удаления. Проверьте Cloud Function.');
+            alert('Ошибка удаления. Проверьте сеть.');
         }
     }
 </script>
