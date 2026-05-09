@@ -26,6 +26,7 @@
             --glass-border: rgba(45, 90, 39, 0.1);
             --radius-strict: 8px; 
             --danger-color: #DC2626;
+            --edit-color: #0284C7;
         }
 
         [data-theme="dark"] {
@@ -39,6 +40,7 @@
             --input-bg: #1A2421;
             --glass-bg: rgba(26, 36, 33, 0.85);
             --glass-border: rgba(143, 188, 143, 0.1);
+            --edit-color: #38BDF8;
         }
 
         body {
@@ -148,7 +150,7 @@
             transition: color 0.3s;
         }
 
-        input[type="text"], textarea {
+        input[type="text"], input[type="date"], textarea {
             width: 100%;
             padding: 14px 16px;
             border: 1px solid var(--border-color);
@@ -161,7 +163,7 @@
             transition: border-color 0.2s, background-color 0.3s, color 0.3s;
         }
 
-        input[type="text"]:focus, textarea:focus {
+        input[type="text"]:focus, input[type="date"]:focus, textarea:focus {
             outline: none;
             border-color: var(--accent-primary);
             box-shadow: inset 2px 2px 0px rgba(0,0,0,0.05);
@@ -241,6 +243,15 @@
 
         .button-submit:hover { background-color: var(--text-color); color: var(--bg-color); }
         .button-submit:active { transform: translateY(2px); }
+        
+        /* Кнопка отмены редактирования */
+        .button-cancel {
+            background-color: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db;
+            padding: 16px 32px; border-radius: var(--radius-strict); cursor: pointer;
+            font-size: 16px; font-weight: 600; width: 100%; margin-top: 10px;
+            display: none; text-transform: uppercase; font-family: 'Inter', sans-serif;
+        }
+        [data-theme="dark"] .button-cancel { background-color: #374151; color: #d1d5db; border-color: #4b5563; }
 
         .article-list { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
         .article-item {
@@ -248,7 +259,10 @@
             padding: 12px 16px; background-color: var(--input-bg);
             border: 1px solid var(--border-color); border-radius: var(--radius-strict);
         }
-        .article-title { font-weight: 500; font-size: 15px; color: var(--text-color); }
+        .article-title { font-weight: 600; font-size: 15px; color: var(--text-color); }
+        .article-meta { font-size: 12px; color: #6b7280; margin-top: 4px; }
+
+        .action-buttons { display: flex; gap: 8px; }
 
         .btn-delete {
             background-color: #FEE2E2; color: var(--danger-color);
@@ -256,6 +270,13 @@
             border-radius: 4px; cursor: pointer; font-weight: 600; transition: 0.2s;
         }
         .btn-delete:hover { background-color: var(--danger-color); color: #fff; }
+
+        .btn-edit {
+            background-color: #E0F2FE; color: var(--edit-color);
+            border: 1px solid #7DD3FC; padding: 6px 12px;
+            border-radius: 4px; cursor: pointer; font-weight: 600; transition: 0.2s;
+        }
+        .btn-edit:hover { background-color: var(--edit-color); color: #fff; }
 
         #status {
             margin-top: 16px; padding: 16px; display: none;
@@ -272,6 +293,7 @@
             .span-2 { grid-column: span 1; }
             .glass-header { padding: 15px 20px; }
             .theme-toggle span { display: none; }
+            .article-item { flex-direction: column; align-items: flex-start; gap: 10px; }
         }
     </style>
 </head>
@@ -319,7 +341,15 @@
         </div>
     </div>
 
+    <!-- Новое поле: Дата публикации -->
     <div class="bento-card">
+        <div class="form-group">
+            <label>Дата публикации (По умолчанию - сегодня)</label>
+            <input type="date" id="pub-date">
+        </div>
+    </div>
+
+    <div class="bento-card span-2">
         <div class="form-group">
             <label>Код видео (Rutube iFrame)</label>
             <input type="text" id="rutube" placeholder='<iframe src="https://rutube.ru/..." ...></iframe>'>
@@ -328,7 +358,8 @@
 
     <div class="bento-card span-2">
         <div class="form-group">
-            <button class="button-submit" onclick="sendData()">Опубликовать материал</button>
+            <button class="button-submit" id="btn-submit" onclick="sendData()">Опубликовать материал</button>
+            <button class="button-cancel" id="btn-cancel" onclick="cancelEdit()">Отменить редактирование</button>
             <div id="status"></div>
         </div>
     </div>
@@ -347,6 +378,10 @@
 <script>
     // ВАЖНО: ЗАМЕНИТЕ НА ВАШУ ССЫЛКУ ИЗ ОБЛАКА
     const API_URL = 'https://functions.yandexcloud.net/d4ecn5ag33dcdd2deivd';
+    
+    // Глобальные переменные для системы редактирования
+    let currentEditId = null; 
+    let loadedArticlesData = [];
 
     var quill = new Quill('#editor-container', {
         theme: 'snow',
@@ -373,7 +408,7 @@
         }
     }
 
-    // НОВАЯ ФУНКЦИЯ: Автоматическое сжатие фото перед отправкой!
+    // Автоматическое сжатие фото перед отправкой
     function handleFileSelect(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -387,13 +422,11 @@
         reader.onload = function(e) {
             const img = new Image();
             img.onload = async function() {
-                // Создаем виртуальный холст для сжатия картинки
                 const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 1200; // Оптимальная ширина для сайта
+                const MAX_WIDTH = 1200; 
                 let width = img.width;
                 let height = img.height;
 
-                // Уменьшаем пропорционально
                 if (width > MAX_WIDTH) {
                     height = Math.round((height * MAX_WIDTH) / width);
                     width = MAX_WIDTH;
@@ -404,7 +437,6 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
 
-                // Сжимаем в формат JPEG (качество 80%)
                 const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
 
                 try {
@@ -424,7 +456,6 @@
                         coverInput.value = result.url; 
                     } else {
                         label.innerText = '❌ Ошибка';
-                        // Если Яндекс отбил ошибкой, показываем ее текст
                         alert('Ошибка сервера: ' + (result.error || result.message || 'Сбой на сервере'));
                     }
                 } catch (error) {
@@ -443,17 +474,19 @@
 
         const data = {
             action: 'create', 
+            id: currentEditId, // Передаем ID, если это редактирование
             title: document.getElementById('title').value,
             slug: document.getElementById('slug').value,
             content: richTextContent, 
             cover_image_url: document.getElementById('cover').value, 
-            rutube_iframe: document.getElementById('rutube').value, 
+            rutube_iframe: document.getElementById('rutube').value,
+            published_at: document.getElementById('pub-date').value, // Передаем дату
             is_published: true
         };
 
         statusDiv.style.display = 'block';
         statusDiv.className = 'status-loading';
-        statusDiv.innerText = 'Подключение к YDB...';
+        statusDiv.innerText = 'Подключение к базе данных...';
 
         try {
             const response = await fetch(API_URL, {
@@ -465,15 +498,10 @@
             
             if (result.status === 'success') {
                 statusDiv.className = 'status-success';
-                statusDiv.innerText = 'Материал успешно загружен в базу.';
+                statusDiv.innerText = currentEditId ? 'Изменения успешно сохранены!' : 'Новый материал опубликован!';
                 
-                document.getElementById('title').value = '';
-                document.getElementById('slug').value = '';
-                quill.setContents([]); 
-                document.getElementById('cover').value = '';
-                document.getElementById('rutube').value = '';
-                document.getElementById('upload-label').innerText = '📁 Выбрать фото на компьютере';
-                
+                // Очистка формы
+                cancelEdit(); 
                 loadArticles();
             } else {
                 throw new Error(result.error || result.message || 'Ошибка сохранения');
@@ -493,21 +521,77 @@
             const data = await response.json();
             
             if (data.articles && data.articles.length > 0) {
+                loadedArticlesData = data.articles; // Сохраняем в глобальную память для редактирования
                 listDiv.innerHTML = '';
+                
                 data.articles.forEach(article => {
+                    // Вычисляем примерное время чтения (150 слов в минуту)
+                    const textLength = article.content ? article.content.replace(/<[^>]+>/g, '').split(/\s+/).length : 0;
+                    const readTime = Math.max(1, Math.ceil(textLength / 150));
+                    const views = article.view_count || 0;
+                    const dateStr = article.published_at || 'Нет даты';
+
                     listDiv.innerHTML += `
                         <div class="article-item" id="art-${article.id}">
-                            <span class="article-title">${article.title}</span>
-                            <button class="btn-delete" onclick="deleteArticle('${article.id}')">🗑 Удалить</button>
+                            <div>
+                                <div class="article-title">${article.title}</div>
+                                <div class="article-meta">
+                                    📅 ${dateStr} &nbsp;|&nbsp; 👁 ${views} &nbsp;|&nbsp; ⏱ ~${readTime} мин
+                                </div>
+                            </div>
+                            <div class="action-buttons">
+                                <button class="btn-edit" onclick="startEdit('${article.id}')">✏️ Редактировать</button>
+                                <button class="btn-delete" onclick="deleteArticle('${article.id}')">🗑 Удалить</button>
+                            </div>
                         </div>
                     `;
                 });
             } else {
+                loadedArticlesData = [];
                 listDiv.innerHTML = '<p style="font-size: 14px; color: var(--text-color);">Статей пока нет.</p>';
             }
         } catch (error) {
             listDiv.innerHTML = '<p style="font-size: 14px; color: #DC2626;">Сбой загрузки списка.</p>';
         }
+    }
+
+    // Функция: Поднять данные статьи в редактор
+    function startEdit(id) {
+        const article = loadedArticlesData.find(a => a.id === id);
+        if(!article) return;
+
+        currentEditId = id;
+        document.getElementById('title').value = article.title || '';
+        document.getElementById('slug').value = article.slug || ''; // Если сервер отдает slug, иначе будет пусто
+        document.getElementById('cover').value = article.cover_image_url || '';
+        document.getElementById('pub-date').value = article.published_at || '';
+        document.getElementById('rutube').value = article.rutube_iframe || '';
+        
+        // Вставляем HTML код в визуальный редактор
+        quill.root.innerHTML = article.content || '';
+
+        // Меняем кнопки
+        document.getElementById('btn-submit').innerText = '💾 Сохранить изменения';
+        document.getElementById('btn-cancel').style.display = 'block';
+        document.getElementById('status').style.display = 'none';
+
+        // Плавно скроллим наверх к заголовку
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Функция: Сбросить режим редактирования
+    function cancelEdit() {
+        currentEditId = null;
+        document.getElementById('title').value = '';
+        document.getElementById('slug').value = '';
+        document.getElementById('cover').value = '';
+        document.getElementById('pub-date').value = '';
+        document.getElementById('rutube').value = '';
+        quill.setContents([]); 
+        
+        document.getElementById('upload-label').innerText = '📁 Выбрать фото на компьютере';
+        document.getElementById('btn-submit').innerText = 'Опубликовать материал';
+        document.getElementById('btn-cancel').style.display = 'none';
     }
 
     async function deleteArticle(id) {
@@ -522,6 +606,7 @@
             
             if (result.status === 'success') {
                 document.getElementById(`art-${id}`).remove();
+                if(currentEditId === id) cancelEdit(); // Если удалили ту, что сейчас редактируем
             } else {
                 alert('Ошибка: ' + (result.error || result.message));
             }
