@@ -517,7 +517,7 @@
         listDiv.innerHTML = '<p style="font-size: 14px; color: var(--text-color);">Загрузка данных...</p>';
         
         try {
-            const response = await fetch(API_URL + '?action=list', { method: 'GET' });
+            const response = await fetch(API_URL + '?action=list&admin=true', { method: 'GET' });
             const data = await response.json();
             
             if (data.articles && data.articles.length > 0) {
